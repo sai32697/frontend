@@ -20,10 +20,12 @@ const MapComponent = () => {
                 zoom: 14,
             });
 
-            // Create a marker but do not attach it yet
+            // Create a marker
             markerRef.current = new mapboxgl.Marker().setLngLat([busLocation.lon, busLocation.lat]).addTo(mapRef.current);
         }
+    }, []); // ✅ Ensures the map initializes only once
 
+    useEffect(() => {
         // Function to fetch the latest GPS location from the backend
         const fetchLocation = async () => {
             try {
@@ -36,21 +38,18 @@ const MapComponent = () => {
             }
         };
 
-        // Fetch location initially
-        fetchLocation();
+        fetchLocation(); // Initial fetch
+        const interval = setInterval(fetchLocation, 5000); // Fetch every 5 seconds
 
-        // Fetch location every 5 seconds
-        const interval = setInterval(fetchLocation, 5000);
         return () => clearInterval(interval);
-    }, []); // ✅ Runs once when the component mounts
+    }, [setBusLocation]); // ✅ Fix: Use setBusLocation to prevent unnecessary re-renders
 
-    // Update marker position when `busLocation` changes
     useEffect(() => {
         if (mapRef.current && markerRef.current) {
             markerRef.current.setLngLat([busLocation.lon, busLocation.lat]);
             mapRef.current.flyTo({ center: [busLocation.lon, busLocation.lat], essential: true });
         }
-    }, [busLocation]); // ✅ Re-run when location updates
+    }, [busLocation]); // ✅ Updates only when busLocation changes
 
     return (
         <div>
